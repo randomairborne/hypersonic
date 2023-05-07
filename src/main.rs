@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
                 let file_name = format!("./music/{}.mp3", meta.name);
                 let data = std::fs::read(&file_name)
                     .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e:?}"));
-                tracks.push(Song { meta, data });
+                tracks.push(Song { data, meta });
             }
             tracks
         };
@@ -111,7 +111,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
                 .map(|s| (s.id().number(), s.sender()))
                 .collect(),
         );
-        let senders: Vec<MessageSender> = shards.iter().map(|v| v.sender()).collect();
+        let senders: Vec<MessageSender> =
+            shards.iter().map(twilight_gateway::Shard::sender).collect();
         let songbird = Songbird::twilight(Arc::new(tmap), user_id);
         (
             shards,
