@@ -28,7 +28,7 @@ Then, create a .env file (or otherwise set the environment):
 ```dotenv
 DISCORD_VC=<your VC's ID>
 DISCORD_GUILD=<the ID of the guild DISCORD_VC is in>
-DISCORD_TOKEN=<your token>
+DISCORD_TOKEN=<your bot's token>
 ```
 
 You can use this command to run the bot in docker:
