@@ -3,6 +3,7 @@ use songbird::{input::Input, shards::TwilightMap, Call, Songbird};
 use std::{
     env,
     error::Error,
+    fmt::Display,
     sync::{atomic::AtomicBool, Arc},
 };
 use tokio::sync::Mutex;
@@ -18,11 +19,30 @@ use twilight_model::id::{
 
 type State = Arc<StateRef>;
 
+#[derive(serde::Deserialize, Debug, Clone)]
+struct SongMetadata {
+    artist: String,
+    name: String,
+    album: String,
+}
+
+impl Display for SongMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} by {} ({})", self.name, self.artist, self.album)
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Song {
+    data: Vec<u8>,
+    meta: SongMetadata,
+}
+
 #[derive(Debug)]
 struct StateRef {
     http: HttpClient,
     songbird: Songbird,
-    songs: Arc<Vec<Vec<u8>>>,
+    songs: Arc<Vec<Song>>,
     vc: Id<ChannelMarker>,
     guild: Id<GuildMarker>,
     shutdown: Arc<AtomicBool>,
@@ -52,13 +72,16 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let intents = Intents::GUILD_VOICE_STATES;
         let config = twilight_gateway::Config::new(token.clone(), intents);
         let tracks = {
-            let files_iter = std::fs::read_dir("music").expect("Failed to list music folder");
-            let mut tracks: Vec<Vec<u8>> = Vec::new();
-            for file in files_iter {
-                let Ok(file) = file else { break; };
-                let data =
-                    std::fs::read(file.path()).expect("there should be a file, but there wasn't");
-                tracks.push(data);
+            let metadata_list: Vec<SongMetadata> = serde_json::from_slice(
+                &std::fs::read("music/meta.json").expect("Failed to read ./music/meta.json"),
+            )
+            .expect("Failed to deserialize ./music/meta.json");
+            let mut tracks: Vec<Song> = Vec::with_capacity(metadata_list.len());
+            for meta in metadata_list {
+                let file_name = format!("./music/{}.mp3", meta.name);
+                let data = std::fs::read(&file_name)
+                    .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e:?}"));
+                tracks.push(Song { meta, data });
             }
             tracks
         };
@@ -140,33 +163,22 @@ async fn play(state: State) {
             return;
         }
     };
-    let mut current_index = 0;
     loop {
-        if let Err(e) = play_idx(call.clone(), state.clone(), current_index).await {
-            tracing::error!("{e:?}");
-        }
-        current_index += 1;
-        if current_index >= state.songs.len() {
-            current_index = 0;
+        for song in &*state.songs {
+            if let Err(e) = play_song(call.clone(), state.clone(), song).await {
+                tracing::error!("{e:?}");
+            }
         }
     }
 }
 
-async fn play_idx(
+async fn play_song(
     call: Arc<Mutex<Call>>,
     state: State,
-    idx: usize,
+    song: &Song,
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    let mut src: Input = state.songs[idx].clone().into();
-    let content = if let Ok(metadata) = src.aux_metadata().await {
-        format!(
-            "Playing **{:?}** by **{:?}**",
-            metadata.track.as_ref().unwrap_or(&"<UNKNOWN>".to_string()),
-            metadata.artist.as_ref().unwrap_or(&"<UNKNOWN>".to_string()),
-        )
-    } else {
-        "Playing a song by someone".to_string()
-    };
+    let src: Input = song.data.clone().into();
+    let content = format!("Now playing {}", song.meta);
     state
         .http
         .create_message(state.vc)

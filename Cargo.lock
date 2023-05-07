@@ -681,6 +681,8 @@ version = "0.1.0"
 dependencies = [
  "dotenvy",
  "futures",
+ "serde",
+ "serde_json",
  "songbird",
  "symphonia",
  "tokio",
