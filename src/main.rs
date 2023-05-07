@@ -184,7 +184,6 @@ async fn play_song(
         .create_message(state.vc)
         .content(&content)?
         .await?;
-
     let handle = call.lock().await.play_input(src);
     while let Ok(v) = handle.get_info().await {
         if v.playing.is_done() {
