@@ -55,7 +55,7 @@ jobs:
         with:
           name: ${{ matrix.arch }}-executables
           path: |
-            target/${{ matrix.arch }}-unknown-linux-musl/release/search6
+            target/${{ matrix.arch }}-unknown-linux-musl/release/hypersonic
 
   deploy:
     runs-on: ubuntu-latest
