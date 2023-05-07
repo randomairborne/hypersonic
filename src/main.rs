@@ -9,7 +9,7 @@ use std::{
 use tokio::sync::Mutex;
 use twilight_gateway::{
     stream::{self, ShardEventStream},
-    Intents, Shard,
+    CloseFrame, Intents, MessageSender, Shard,
 };
 use twilight_http::Client as HttpClient;
 use twilight_model::id::{
@@ -46,11 +46,26 @@ struct StateRef {
     vc: Id<ChannelMarker>,
     guild: Id<GuildMarker>,
     shutdown: Arc<AtomicBool>,
+    senders: Vec<MessageSender>,
+}
+
+impl StateRef {
+    pub fn shutdown(&self) {
+        tracing::warn!("Shutting down...");
+        self.shutdown
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+        for sender in &self.senders {
+            sender.close(CloseFrame::NORMAL).ok();
+        }
+    }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     dotenvy::dotenv().ok();
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "hypersonic=info");
+    }
     // Initialize the tracing subscriber.
     tracing_subscriber::fmt::init();
 
@@ -73,7 +88,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let config = twilight_gateway::Config::new(token.clone(), intents);
         let tracks = {
             let metadata_list: Vec<SongMetadata> = serde_json::from_slice(
-                &std::fs::read("music/meta.json").expect("Failed to read ./music/meta.json"),
+                &std::fs::read("./music/meta.json").expect("Failed to read ./music/meta.json"),
             )
             .expect("Failed to deserialize ./music/meta.json");
             let mut tracks: Vec<Song> = Vec::with_capacity(metadata_list.len());
@@ -90,15 +105,14 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
                 .await?
                 .collect();
 
-        let senders = TwilightMap::new(
+        let tmap = TwilightMap::new(
             shards
                 .iter()
                 .map(|s| (s.id().number(), s.sender()))
                 .collect(),
         );
-
-        let songbird = Songbird::twilight(Arc::new(senders), user_id);
-
+        let senders: Vec<MessageSender> = shards.iter().map(|v| v.sender()).collect();
+        let songbird = Songbird::twilight(Arc::new(tmap), user_id);
         (
             shards,
             Arc::new(StateRef {
@@ -107,11 +121,17 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
                 songs: Arc::new(tracks),
                 vc: vc_id,
                 guild: guild_id,
+                senders,
                 shutdown: Arc::new(AtomicBool::new(false)),
             }),
         )
     };
     let mut stream = ShardEventStream::new(shards.iter_mut());
+    let state_ctrlc = state.clone();
+    tokio::spawn(async move {
+        tokio::signal::ctrl_c().await.unwrap();
+        state_ctrlc.clone().shutdown();
+    });
     tokio::spawn(play(state.clone()));
     loop {
         let event = match stream.next().await {
@@ -130,7 +150,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let state = state.clone();
         state.songbird.process(&event).await;
         if state.shutdown.load(std::sync::atomic::Ordering::Relaxed) {
-            state.songbird.remove(state.guild).await.ok();
+            state.songbird.leave(state.guild).await.ok();
             break;
         }
     }
@@ -142,24 +162,20 @@ async fn play(state: State) {
     if let Err(e) = state.songbird.remove(state.guild).await {
         if !matches!(e, songbird::error::JoinError::NoCall) {
             tracing::error!("{e:?}");
-            state
-                .shutdown
-                .store(true, std::sync::atomic::Ordering::Relaxed)
+            state.shutdown();
+            return;
         }
     };
     if state.songs.is_empty() {
         tracing::error!("Songs list empty!");
-        state
-            .shutdown
-            .store(true, std::sync::atomic::Ordering::Relaxed)
+        state.shutdown();
+        return;
     };
     let call = match state.songbird.join(state.guild, state.vc).await {
         Ok(call) => call,
         Err(e) => {
             tracing::error!("{e:?}");
-            state
-                .shutdown
-                .store(true, std::sync::atomic::Ordering::Relaxed);
+            state.shutdown();
             return;
         }
     };
@@ -169,6 +185,7 @@ async fn play(state: State) {
                 tracing::error!("{e:?}");
             }
         }
+        tracing::info!("Reached last song, restarting...");
     }
 }
 
@@ -179,6 +196,7 @@ async fn play_song(
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let src: Input = song.data.clone().into();
     let content = format!("Now playing {}", song.meta);
+    tracing::info!("{}", content);
     state
         .http
         .create_message(state.vc)
