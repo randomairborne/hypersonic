@@ -14,6 +14,6 @@ FROM debian:stable-slim
 COPY --from=builder /build/target/release/hypersonic /usr/bin/hypersonic
 
 RUN apt-get update
-RUN apt-get install libopus-dev -y
+RUN apt-get install libopus-dev ca-certificates -y
 
 ENTRYPOINT "/usr/bin/hypersonic"

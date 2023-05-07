@@ -34,5 +34,5 @@ DISCORD_TOKEN=<your bot's token>
 You can use this command to run the bot in docker:
 
 ```bash
-docker run ghcr.io/randomairborne/hypersonic:latest --env-file .env --volume ./music/:./music/
+docker run ghcr.io/randomairborne/hypersonic:latest --env-file .env --volume ./music/:/music/
 ```
