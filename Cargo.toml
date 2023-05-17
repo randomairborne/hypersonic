@@ -2,10 +2,11 @@
 name = "hypersonic"
 version = "0.1.0"
 edition = "2021"
+default-run = "player"
 
 [dependencies]
 futures = "0.3"
-symphonia = { features = ["aac", "mp3", "isomp4", "alac"], version = "0.5" }
+symphonia = { features = ["aac", "mp3", "isomp4", "alac", "vorbis"], version = "0.5" }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tokio = { features = ["macros", "rt-multi-thread", "sync", "signal"], version = "1" }
