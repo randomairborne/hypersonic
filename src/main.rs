@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use futures::StreamExt;
 use songbird::{input::Input, shards::TwilightMap, Call, Songbird};
 use std::{
