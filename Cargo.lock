@@ -1479,7 +1479,7 @@ dependencies = [
 [[package]]
 name = "serenity"
 version = "0.11.5"
-source = "git+https://github.com/serenity-rs/serenity?branch=next#296886b860ebbe888e6e554308ff76155bdcc95e"
+source = "git+https://github.com/serenity-rs/serenity?branch=next#82359c3973e085503598b53fbd7428af6bdcb040"
 dependencies = [
  "async-trait",
  "base64 0.21.2",
@@ -1503,7 +1503,7 @@ dependencies = [
 [[package]]
 name = "serenity-voice-model"
 version = "0.1.1"
-source = "git+https://github.com/serenity-rs/serenity?branch=next#296886b860ebbe888e6e554308ff76155bdcc95e"
+source = "git+https://github.com/serenity-rs/serenity?branch=next#82359c3973e085503598b53fbd7428af6bdcb040"
 dependencies = [
  "bitflags",
  "enum_primitive",
@@ -1579,7 +1579,7 @@ dependencies = [
 [[package]]
 name = "songbird"
 version = "0.3.2"
-source = "git+https://github.com/serenity-rs/songbird?branch=next#0044728b5407aa7644153c72158aa3ee99c69bfa"
+source = "git+https://github.com/serenity-rs/songbird?branch=next#94a031721d57c4c4475de3765dfc71c72915d629"
 dependencies = [
  "async-trait",
  "audiopus",
