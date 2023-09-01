@@ -311,6 +311,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto_secretbox"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9d6cf87adf719ddf43a805e92c6870a531aedda35ff640442cbaf8674e141e1"
+dependencies = [
+ "aead",
+ "cipher",
+ "generic-array",
+ "poly1305",
+ "salsa20",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
 name = "dashmap"
 version = "5.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -406,14 +421,13 @@ dependencies = [
 
 [[package]]
 name = "flume"
-version = "0.10.14"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1657b4441c3403d9f7b3409e47575237dac27b1b5726df654a6ecbf92f0f7577"
+checksum = "55ac459de2512911e4b674ce33cf20befaba382d05b62b008afc1c8b57cbf181"
 dependencies = [
  "futures-core",
  "futures-sink",
  "nanorand",
- "pin-project",
  "spin 0.9.8",
 ]
 
@@ -542,6 +556,7 @@ checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
 dependencies = [
  "typenum",
  "version_check",
+ "zeroize",
 ]
 
 [[package]]
@@ -1303,9 +1318,9 @@ dependencies = [
 
 [[package]]
 name = "rubato"
-version = "0.12.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd70209c27d5b08f5528bdc779ea3ffb418954e28987f9f9775c6eac41003f9c"
+checksum = "e6dd52e80cfc21894deadf554a5673002938ae4625f7a283e536f9cf7c17b0d5"
 dependencies = [
  "num-complex",
  "num-integer",
@@ -1575,7 +1590,7 @@ dependencies = [
 [[package]]
 name = "serenity"
 version = "0.11.5"
-source = "git+https://github.com/serenity-rs/serenity?branch=next#29e8ff008c6ac3cdd030baf6cff60a4fd8de1867"
+source = "git+https://github.com/serenity-rs/serenity?branch=next#4f0f6493fe17a2f29f1228428c500d640614602e"
 dependencies = [
  "arrayvec",
  "async-trait",
@@ -1592,7 +1607,7 @@ dependencies = [
  "serde_json",
  "time",
  "tokio",
- "tokio-tungstenite 0.18.0",
+ "tokio-tungstenite 0.19.0",
  "tracing",
  "typemap_rev",
  "url",
@@ -1601,7 +1616,7 @@ dependencies = [
 [[package]]
 name = "serenity-voice-model"
 version = "0.1.1"
-source = "git+https://github.com/serenity-rs/serenity?branch=next#29e8ff008c6ac3cdd030baf6cff60a4fd8de1867"
+source = "git+https://github.com/serenity-rs/serenity?branch=next#4f0f6493fe17a2f29f1228428c500d640614602e"
 dependencies = [
  "bitflags",
  "enum_primitive",
@@ -1677,11 +1692,12 @@ dependencies = [
 [[package]]
 name = "songbird"
 version = "0.3.2"
-source = "git+https://github.com/serenity-rs/songbird?branch=next#fdbcd3fe0df71e620035a71b2db326fb0e3ded7a"
+source = "git+https://github.com/serenity-rs/songbird?branch=next#efe2a0b6d5d0e01685334c0cac05bb4bbbf0c32d"
 dependencies = [
  "async-trait",
  "audiopus",
  "byteorder",
+ "crypto_secretbox",
  "dashmap",
  "derivative",
  "discortp",
@@ -1706,7 +1722,7 @@ dependencies = [
  "symphonia",
  "symphonia-core",
  "tokio",
- "tokio-tungstenite 0.19.0",
+ "tokio-tungstenite 0.20.0",
  "tokio-util",
  "tracing",
  "tracing-futures",
@@ -1715,7 +1731,6 @@ dependencies = [
  "typemap_rev",
  "url",
  "uuid",
- "xsalsa20poly1305",
 ]
 
 [[package]]
@@ -2098,7 +2113,6 @@ dependencies = [
  "tokio-rustls 0.23.4",
  "tungstenite 0.18.0",
  "webpki",
- "webpki-roots 0.22.6",
 ]
 
 [[package]]
@@ -2113,6 +2127,21 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.24.1",
  "tungstenite 0.19.0",
+ "webpki-roots 0.23.1",
+]
+
+[[package]]
+name = "tokio-tungstenite"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2dbec703c26b00d74844519606ef15d09a7d6857860f84ad223dec002ddea2"
+dependencies = [
+ "futures-util",
+ "log",
+ "rustls 0.21.6",
+ "tokio",
+ "tokio-rustls 0.24.1",
+ "tungstenite 0.20.0",
  "webpki-roots 0.23.1",
 ]
 
@@ -2265,6 +2294,26 @@ dependencies = [
  "url",
  "utf-8",
  "webpki",
+]
+
+[[package]]
+name = "tungstenite"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e862a1c4128df0112ab625f55cd5c934bcb4312ba80b39ae4b4835a3fd58e649"
+dependencies = [
+ "byteorder",
+ "bytes",
+ "data-encoding",
+ "http",
+ "httparse",
+ "log",
+ "rand",
+ "rustls 0.21.6",
+ "sha1",
+ "thiserror",
+ "url",
+ "utf-8",
 ]
 
 [[package]]
@@ -2573,15 +2622,6 @@ dependencies = [
 
 [[package]]
 name = "webpki-roots"
-version = "0.22.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6c71e40d7d2c34a5106301fb632274ca37242cd0c9d3e64dbece371a40a2d87"
-dependencies = [
- "webpki",
-]
-
-[[package]]
-name = "webpki-roots"
 version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b03058f88386e5ff5310d9111d53f48b17d732b401aeb83a8d5190f2ac459338"
@@ -2700,19 +2740,6 @@ checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
 dependencies = [
  "cfg-if",
  "windows-sys",
-]
-
-[[package]]
-name = "xsalsa20poly1305"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02a6dad357567f81cd78ee75f7c61f1b30bb2fe4390be8fb7c69e2ac8dffb6c7"
-dependencies = [
- "aead",
- "poly1305",
- "salsa20",
- "subtle",
- "zeroize",
 ]
 
 [[package]]
