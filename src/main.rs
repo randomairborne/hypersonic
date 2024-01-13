@@ -1,12 +1,13 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
-use futures::StreamExt;
-use songbird::{input::Input, shards::TwilightMap, Call, Songbird};
 use std::{
-    env,
     error::Error,
     fmt::Display,
+    str::FromStr,
     sync::{atomic::AtomicBool, Arc},
 };
+
+use futures::StreamExt;
+use songbird::{input::Input, shards::TwilightMap, Call, Songbird};
 use tokio::sync::Mutex;
 use twilight_gateway::{
     stream::{self, ShardEventStream},
@@ -71,17 +72,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     tracing_subscriber::fmt::init();
 
     let (mut shards, state) = {
-        let token = env::var("DISCORD_TOKEN").expect("Missing environment variable DISCORD_TOKEN");
-        let vc_str = env::var("DISCORD_VC").expect("Missing environment variable DISCORD_VC");
-        let guild_str =
-            env::var("DISCORD_GUILD").expect("Missing environment variable DISCORD_GUILD");
-        let vc_id: Id<ChannelMarker> = vc_str
-            .parse()
-            .expect("Expected valid integer for DISCORD_VC");
-
-        let guild_id: Id<GuildMarker> = guild_str
-            .parse()
-            .expect("Expected valid integer for DISCORD_GUILD");
+        let token: String = parse_var("DISCORD_TOKEN");
+        let vc: Id<ChannelMarker> = parse_var("DISCORD_VC");
+        let guild: Id<GuildMarker> = parse_var("DISCORD_GUILD");
         let http = HttpClient::new(token.clone());
         let user_id = http.current_user().await?.model().await?.id;
 
@@ -121,8 +114,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
                 http,
                 songbird,
                 songs: Arc::new(tracks),
-                vc: vc_id,
-                guild: guild_id,
+                vc,
+                guild,
                 senders,
                 shutdown: Arc::new(AtomicBool::new(false)),
             }),
@@ -212,4 +205,15 @@ async fn play_song(
         tokio::time::sleep(std::time::Duration::from_millis(50)).await;
     }
     Ok(())
+}
+
+fn parse_var<T>(name: &str) -> T
+where
+    T: FromStr,
+    T::Err: std::fmt::Debug,
+{
+    std::env::var(name)
+        .unwrap_or_else(|_| panic!("{name} required in the environment"))
+        .parse()
+        .unwrap_or_else(|_| panic!("{name} must be a valid {}", std::any::type_name::<T>()))
 }

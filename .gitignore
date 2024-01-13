@@ -4,3 +4,5 @@
 /music
 .DS_Store
 .env
+/.idea/
+/.vscode/

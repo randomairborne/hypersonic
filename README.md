@@ -1,6 +1,6 @@
 # hypersonic
 
-is a discord music bot written in [rust](https://rust-lang.org).
+hypersonic is a discord music bot written in [rust](https://rust-lang.org).
 
 hypersonic is designed to play music files on loop in one VC.
 
@@ -17,7 +17,7 @@ create a music folder, with your mp3 files (they must be mp3) and a file called 
         "name": "13",
         "artist": "C418",
         "album": "Minecraft: Volume Beta"
-    },
+    }
 ]
 ```
 
