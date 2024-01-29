@@ -68,45 +68,42 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "hypersonic=info");
     }
-    // Initialize the tracing subscriber.
     tracing_subscriber::fmt::init();
+    let token: String = parse_var("DISCORD_TOKEN");
+    let vc: Id<ChannelMarker> = parse_var("DISCORD_VC");
+    let guild: Id<GuildMarker> = parse_var("DISCORD_GUILD");
+    let http = HttpClient::new(token.clone());
+    let user_id = http.current_user().await?.model().await?.id;
+
+    let intents = Intents::GUILD_VOICE_STATES;
+    let config = twilight_gateway::Config::new(token.clone(), intents);
+    let tracks = {
+        let metadata_list: Vec<SongMetadata> = serde_json::from_slice(
+            &std::fs::read("./music/meta.json").expect("Failed to read ./music/meta.json"),
+        )
+        .expect("Failed to deserialize ./music/meta.json");
+        let mut tracks: Vec<Song> = Vec::with_capacity(metadata_list.len());
+        for meta in metadata_list {
+            let file_name = format!("./music/{}.mp3", meta.name);
+            let data = std::fs::read(&file_name)
+                .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e:?}"));
+            tracks.push(Song { data, meta });
+        }
+        tracks
+    };
 
     let (mut shards, state) = {
-        let token: String = parse_var("DISCORD_TOKEN");
-        let vc: Id<ChannelMarker> = parse_var("DISCORD_VC");
-        let guild: Id<GuildMarker> = parse_var("DISCORD_GUILD");
-        let http = HttpClient::new(token.clone());
-        let user_id = http.current_user().await?.model().await?.id;
-
-        let intents = Intents::GUILD_VOICE_STATES;
-        let config = twilight_gateway::Config::new(token.clone(), intents);
-        let tracks = {
-            let metadata_list: Vec<SongMetadata> = serde_json::from_slice(
-                &std::fs::read("./music/meta.json").expect("Failed to read ./music/meta.json"),
-            )
-            .expect("Failed to deserialize ./music/meta.json");
-            let mut tracks: Vec<Song> = Vec::with_capacity(metadata_list.len());
-            for meta in metadata_list {
-                let file_name = format!("./music/{}.mp3", meta.name);
-                let data = std::fs::read(&file_name)
-                    .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e:?}"));
-                tracks.push(Song { data, meta });
-            }
-            tracks
-        };
         let shards: Vec<Shard> =
             stream::create_recommended(&http, config, |_, builder| builder.build())
                 .await?
                 .collect();
-
         let tmap = TwilightMap::new(
             shards
                 .iter()
                 .map(|s| (s.id().number(), s.sender()))
                 .collect(),
         );
-        let senders: Vec<MessageSender> =
-            shards.iter().map(twilight_gateway::Shard::sender).collect();
+        let senders: Vec<MessageSender> = shards.iter().map(Shard::sender).collect();
         let songbird = Songbird::twilight(Arc::new(tmap), user_id);
         (
             shards,
@@ -124,7 +121,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let mut stream = ShardEventStream::new(shards.iter_mut());
     let state_ctrlc = state.clone();
     tokio::spawn(async move {
-        tokio::signal::ctrl_c().await.unwrap();
+        vss::shutdown_signal().await;
         state_ctrlc.clone().shutdown();
     });
     tokio::spawn(play(state.clone()));
@@ -145,7 +142,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let state = state.clone();
         state.songbird.process(&event).await;
         if state.shutdown.load(std::sync::atomic::Ordering::Relaxed) {
-            state.songbird.leave(state.guild).await.ok();
+            state.songbird.remove(state.guild).await.ok();
             break;
         }
     }
