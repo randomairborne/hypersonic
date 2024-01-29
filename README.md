@@ -4,24 +4,26 @@ hypersonic is a discord music bot written in [rust](https://rust-lang.org).
 
 hypersonic is designed to play music files on loop in one VC.
 
-create a music folder, with your mp3 files (they must be mp3) and a file called `meta.json`. That file should look something like this:
+create a music folder, with your files and a file called `meta.json`. That file should look something like this:
 
 ```json
 [
     {
         "name": "11",
         "artist": "C418",
-        "album": "Minecraft: Volume Beta"
+        "album": "Minecraft: Volume Beta",
+        "file": "11.mp3"
     },
     {
         "name": "13",
         "artist": "C418",
-        "album": "Minecraft: Volume Beta"
+        "album": "Minecraft: Volume Beta",
+        "file": "13.wav"
     }
 ]
 ```
 
-This example would load `11.mp3` and `13.mp3` from the music folder, and play them.
+This example would load `11.mp3` and `13.wav` from the music folder, and play them.
 
 Then, create a .env file (or otherwise set the environment):
 

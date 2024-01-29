@@ -19,6 +19,9 @@ use twilight_model::id::{
     Id,
 };
 
+#[macro_use]
+extern crate tracing;
+
 type State = Arc<StateRef>;
 
 #[derive(serde::Deserialize, Debug, Clone)]
@@ -26,6 +29,7 @@ struct SongMetadata {
     artist: String,
     name: String,
     album: String,
+    file: Option<String>,
 }
 
 impl Display for SongMetadata {
@@ -53,7 +57,7 @@ struct StateRef {
 
 impl StateRef {
     pub fn shutdown(&self) {
-        tracing::warn!("Shutting down...");
+        warn!("Shutting down...");
         self.shutdown
             .store(true, std::sync::atomic::Ordering::Relaxed);
         for sender in &self.senders {
@@ -84,9 +88,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         .expect("Failed to deserialize ./music/meta.json");
         let mut tracks: Vec<Song> = Vec::with_capacity(metadata_list.len());
         for meta in metadata_list {
-            let file_name = format!("./music/{}.mp3", meta.name);
-            let data = std::fs::read(&file_name)
-                .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e:?}"));
+            let file_name = meta
+                .file
+                .clone()
+                .unwrap_or_else(|| format!("{}.mp3", meta.name));
+            let file_path = format!("./music/{file_name}");
+            let data = std::fs::read(&file_path)
+                .unwrap_or_else(|e| panic!("Failed to read {file_path}: {e:?}"));
             tracks.push(Song { data, meta });
         }
         tracks
@@ -129,7 +137,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let event = match stream.next().await {
             Some((_, Ok(event))) => event,
             Some((_, Err(source))) => {
-                tracing::warn!(?source, "error receiving event");
+                warn!(?source, "error receiving event");
 
                 if source.is_fatal() {
                     break;
@@ -153,20 +161,20 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
 async fn play(state: State) {
     if let Err(e) = state.songbird.remove(state.guild).await {
         if !matches!(e, songbird::error::JoinError::NoCall) {
-            tracing::error!("{e:?}");
+            error!("{e:?}");
             state.shutdown();
             return;
         }
     };
     if state.songs.is_empty() {
-        tracing::error!("Songs list empty!");
+        error!("Songs list empty!");
         state.shutdown();
         return;
     };
     let call = match state.songbird.join(state.guild, state.vc).await {
         Ok(call) => call,
         Err(e) => {
-            tracing::error!("{e:?}");
+            error!("{e:?}");
             state.shutdown();
             return;
         }
@@ -174,10 +182,10 @@ async fn play(state: State) {
     loop {
         for song in &*state.songs {
             if let Err(e) = play_song(call.clone(), state.clone(), song).await {
-                tracing::error!("{e:?}");
+                error!("{e:?}");
             }
         }
-        tracing::info!("Reached last song, restarting...");
+        info!("Reached last song, restarting...");
     }
 }
 
@@ -188,7 +196,7 @@ async fn play_song(
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let src: Input = song.data.clone().into();
     let content = format!("Now playing {}", song.meta);
-    tracing::info!("{}", content);
+    info!("{}", content);
     state
         .http
         .create_message(state.vc)
