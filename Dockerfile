@@ -4,9 +4,9 @@ WORKDIR /build/
 
 COPY . .
 
-RUN apk add opus-dev musl-dev cmake
+RUN apk add musl-dev make cmake
 
-ENV OPUS_STATIC true
+ENV OPUS_STATIC=true
 RUN cargo build --release
 
 FROM alpine:latest
