@@ -1,4 +1,4 @@
-name: PR check
+name: Check build
 on:
   pull_request:
   workflow_dispatch:

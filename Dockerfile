@@ -1,19 +1,16 @@
-FROM rust:latest AS builder
+FROM rust:alpine AS builder
 
 WORKDIR /build/
 
 COPY . .
 
-RUN apt-get update
-RUN apt-get install libopus-dev -y
+RUN apk add musl-dev make cmake
 
+ENV OPUS_STATIC=true
 RUN cargo build --release
 
-FROM debian:stable-slim
+FROM alpine:latest
 
 COPY --from=builder /build/target/release/hypersonic /usr/bin/hypersonic
-
-RUN apt-get update
-RUN apt-get install libopus-dev ca-certificates -y
 
 ENTRYPOINT "/usr/bin/hypersonic"
