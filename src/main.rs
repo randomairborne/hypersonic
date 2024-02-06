@@ -147,8 +147,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
             }
             None => break,
         };
-        let state = state.clone();
-        state.songbird.process(&event).await;
+        let state2 = state.clone();
+        tokio::spawn(async move {
+            state2.songbird.process(&event).await;
+        });
         if state.shutdown.load(std::sync::atomic::Ordering::Relaxed) {
             state.songbird.remove(state.guild).await.ok();
             break;
