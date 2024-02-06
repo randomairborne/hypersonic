@@ -161,9 +161,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
 }
 
 async fn play(state: State) {
-    if let Err(e) = state.songbird.remove(state.guild).await {
-        if !matches!(e, songbird::error::JoinError::NoCall) {
-            error!("{e:?}");
+    if let Err(source) = state.songbird.remove(state.guild).await {
+        if !matches!(source, songbird::error::JoinError::NoCall) {
+            error!(?source, "error joining call");
             state.shutdown();
             return;
         }
@@ -175,16 +175,16 @@ async fn play(state: State) {
     };
     let call = match state.songbird.join(state.guild, state.vc).await {
         Ok(call) => call,
-        Err(e) => {
-            error!("{e:?}");
+        Err(source) => {
+            error!(?source, "error joining call");
             state.shutdown();
             return;
         }
     };
     loop {
         for song in &*state.songs {
-            if let Err(e) = play_song(call.clone(), state.clone(), song).await {
-                error!("{e:?}");
+            if let Err(source) = play_song(call.clone(), state.clone(), song).await {
+                error!(?source, "error playing song");
             }
         }
         info!("Reached last song, restarting...");
@@ -198,7 +198,13 @@ async fn play_song(
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let src: Input = song.data.clone().into();
     let content = format!("Now playing {}", song.meta);
-    info!("{}", content);
+    info!(
+        name = song.meta.name,
+        album = song.meta.album,
+        artist = song.meta.artist,
+        file = song.meta.file,
+        "now playing song"
+    );
     state
         .http
         .create_message(state.vc)
