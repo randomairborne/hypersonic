@@ -4,6 +4,7 @@ use std::{
     fmt::Display,
     str::FromStr,
     sync::{atomic::AtomicBool, Arc},
+    time::Duration,
 };
 
 use futures::StreamExt;
@@ -73,7 +74,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         std::env::set_var("RUST_LOG", "hypersonic=info");
     }
     tracing_subscriber::fmt::init();
-    let token: String = parse_var("DISCORD_TOKEN");
+
+    let token = get_var("DISCORD_TOKEN");
     let vc: Id<ChannelMarker> = parse_var("DISCORD_VC");
     let guild: Id<GuildMarker> = parse_var("DISCORD_GUILD");
     let http = HttpClient::new(token.clone());
@@ -215,9 +217,13 @@ async fn play_song(
         if v.playing.is_done() {
             return Ok(());
         }
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        tokio::time::sleep(Duration::from_millis(50)).await;
     }
     Ok(())
+}
+
+fn get_var(name: &str) -> String {
+    std::env::var(name).unwrap_or_else(|_| panic!("{name} required in the environment"))
 }
 
 fn parse_var<T>(name: &str) -> T
@@ -225,8 +231,7 @@ where
     T: FromStr,
     T::Err: std::fmt::Debug,
 {
-    std::env::var(name)
-        .unwrap_or_else(|_| panic!("{name} required in the environment"))
+    get_var(name)
         .parse()
         .unwrap_or_else(|_| panic!("{name} must be a valid {}", std::any::type_name::<T>()))
 }
