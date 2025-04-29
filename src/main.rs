@@ -104,7 +104,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
             };
             let state2 = state.clone();
             if let Event::GatewayClose(Some(gc)) = &event {
-                info!(code = gc.code, message = gc.reason.as_ref(), "Got gateway close frame");
+                info!(
+                    code = gc.code,
+                    message = gc.reason.as_ref(),
+                    "Got gateway close frame"
+                );
                 if gc.code == 1000 {
                     break;
                 }
