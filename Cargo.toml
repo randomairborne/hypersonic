@@ -4,21 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-symphonia = { features = ["aac", "mp3", "isomp4", "alac", "vorbis"], version = "0.5" }
+symphonia = { features = ["aac", "mpa", "isomp4", "alac", "vorbis"], version = "0.5" }
 tokio = { features = ["macros", "rt-multi-thread", "sync"], version = "1" }
-serde = { version = "1", features = ["derive"] }
 tracing-subscriber = "0.3"
-twilight-gateway = "0.15"
-twilight-model = "0.15"
-twilight-http = "0.15"
-serde_json = "1"
-dotenvy = "0.15"
-futures = "0.3"
+twilight-gateway = "0.16"
+twilight-model = "0.16"
+twilight-http = "0.16"
 tracing = "0.1"
 vss = "0.1"
+tokio-util = { version = "0.7", features = ["rt"] }
+futures-util = "0.3.31"
+rand = "0.9.1"
+thiserror = "2.0.12"
 
 [dependencies.songbird]
 default-features = false
 git = "https://github.com/serenity-rs/songbird"
 branch = "next"
-features = ["driver", "gateway", "twilight", "rustls"]
+features = ["driver", "gateway", "twilight", "rustls", "tws"]
