@@ -15,9 +15,6 @@ use twilight_model::id::{
     Id,
 };
 
-const HYPERSONIC_CLOSE_FRAME: CloseFrame<'static> =
-    CloseFrame::new(1000, "Hypersonic shutting down now");
-
 #[macro_use]
 extern crate tracing;
 
@@ -107,7 +104,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
             };
             let state2 = state.clone();
             if let Event::GatewayClose(Some(gc)) = &event {
-                if *gc == HYPERSONIC_CLOSE_FRAME {
+                info!(code = gc.code, message = gc.reason.as_ref(), "Got gateway close frame");
+                if gc.code == 1000 {
                     break;
                 }
             }
@@ -120,10 +118,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     futures_util::future::select(pin!(vss::shutdown_signal()), &mut player_handle).await;
 
     info!("Leaving VC");
-    state.songbird.leave(state.guild).await.ok();
+    state.songbird.remove(state.guild).await.ok();
 
     info!("Closing connection to discord");
-    sender.close(HYPERSONIC_CLOSE_FRAME).ok();
+    sender.close(CloseFrame::NORMAL).ok();
 
     info!("Waiting for event loop to exit");
     event_loop.await?;
