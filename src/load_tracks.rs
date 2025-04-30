@@ -44,38 +44,37 @@ fn add_metadata(path: &Path) -> Result<Song, TrackLoadError> {
         .format(&hint, mss, &fmt_opts, &meta_opts)
         .map_err(|e| TrackLoadError::Symphonia(path.to_path_buf(), e))?;
 
-    let mut o_artist: Option<Box<str>> = None;
-    let mut o_name: Option<Box<str>> = None;
-    let mut o_album: Option<Box<str>> = None;
+    let mut artist: Option<Box<str>> = None;
+    let mut title: Option<Box<str>> = None;
+    let mut album: Option<Box<str>> = None;
 
     if let Some(metadata_rev) = probed.metadata.get().as_ref().and_then(Metadata::current) {
         for tag in metadata_rev.tags() {
             if let Some(tag_key) = tag.std_key {
                 match (tag_key, &tag.value) {
-                    (Stk::Album, MetaValue::String(album)) => {
-                        o_album = Some(album.clone().into_boxed_str());
+                    (Stk::Album, MetaValue::String(detected_album)) => {
+                        album = Some(detected_album.clone().into_boxed_str());
                     }
-                    (Stk::Artist, MetaValue::String(artist)) => {
-                        o_artist = Some(artist.clone().into_boxed_str());
+                    (Stk::Artist, MetaValue::String(detected_artist)) => {
+                        artist = Some(detected_artist.clone().into_boxed_str());
                     }
-                    (Stk::TrackTitle, MetaValue::String(name)) => {
-                        o_name = Some(name.clone().into_boxed_str());
+                    (Stk::TrackTitle, MetaValue::String(detected_name)) => {
+                        title = Some(detected_name.clone().into_boxed_str());
                     }
                     _ => {}
                 }
             }
         }
     }
-    let optionals = [o_artist, o_name, o_album];
-    let [Some(artist), Some(name), Some(album)] = optionals else {
-        return Err(TrackLoadError::MissingMetadata(
-            path.to_path_buf(),
-            optionals,
-        ));
-    };
+
+    let title = title.unwrap_or_else(|| {
+        path.file_stem()
+            .map_or_else(|| "Unknown".into(), |v| v.to_string_lossy().into())
+    });
+
     let meta = SongMetadata {
+        title,
         artist,
-        name,
         album,
     };
     Ok(Song { data, meta })
@@ -121,6 +120,4 @@ pub enum TrackLoadError {
     Io(PathBuf, std::io::Error),
     #[error("{0} Symphonia error: {1}")]
     Symphonia(PathBuf, symphonia::core::errors::Error),
-    #[error("{0} is missing tags: {1:?}")]
-    MissingMetadata(PathBuf, [Option<Box<str>>; 3]),
 }

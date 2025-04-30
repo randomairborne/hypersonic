@@ -20,14 +20,19 @@ extern crate tracing;
 
 #[derive(Debug, Clone)]
 struct SongMetadata {
-    artist: Box<str>,
-    name: Box<str>,
-    album: Box<str>,
+    title: Box<str>,
+    artist: Option<Box<str>>,
+    album: Option<Box<str>>,
 }
 
 impl Display for SongMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} by {} ({})", self.name, self.artist, self.album)
+        match (&self.artist, &self.album) {
+            (Some(artist), Some(album)) => write!(f, "{} by {artist} ({album})", self.title),
+            (Some(artist), None) => write!(f, "{} by {artist}", self.title),
+            (None, Some(album)) => write!(f, "{} from {album}", self.title),
+            (None, None) => f.write_str(&self.title),
+        }
     }
 }
 
@@ -170,7 +175,7 @@ async fn play_song(
     let src: Input = song.data.clone().into();
     let content = format!("Now playing {}", song.meta);
     info!(
-        name = &song.meta.name.as_ref(),
+        name = &song.meta.title.as_ref(),
         album = &song.meta.album.as_ref(),
         artist = song.meta.artist.as_ref(),
         "now playing song"
