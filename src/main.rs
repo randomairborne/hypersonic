@@ -52,10 +52,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let token = get_var("DISCORD_TOKEN");
     let vc: Id<ChannelMarker> = parse_var("DISCORD_VC");
     let guild: Id<GuildMarker> = parse_var("DISCORD_GUILD");
+
     let http = HttpClient::new(token.clone());
     let user_id = http.current_user().await?.model().await?.id;
-
-    let intents = Intents::GUILD_VOICE_STATES;
     let tracks = load_tracks::get_tracks("music")?;
 
     if tracks.is_empty() {
@@ -63,7 +62,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     }
 
     let (mut shard, state) = {
-        let shard = Shard::new(ShardId::ONE, token, intents);
+        let shard = Shard::new(ShardId::ONE, token, Intents::GUILD_VOICE_STATES);
         let tmap =
             TwilightMap::new(std::iter::once((shard.id().number(), shard.sender())).collect());
         let songbird = Songbird::twilight(Arc::new(tmap), user_id).into();
@@ -87,14 +86,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let event_tasks = tasks.clone();
     let event_loop = tokio::spawn(async move {
         let state = event_state.clone();
-        while let Some(event) = shard
-            .next_event(
-                EventTypeFlags::VOICE_SERVER_UPDATE
-                    | EventTypeFlags::VOICE_STATE_UPDATE
-                    | EventTypeFlags::GUILD_VOICE_STATES,
-            )
-            .await
-        {
+        while let Some(event) = shard.next_event(EventTypeFlags::GUILD_VOICE_STATES).await {
             let event = match event {
                 Ok(v) => v,
                 Err(e) => {
