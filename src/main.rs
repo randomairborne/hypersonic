@@ -2,7 +2,7 @@
 
 mod load_tracks;
 
-use std::{error::Error, fmt::Display, pin::pin, str::FromStr, sync::Arc, time::Duration};
+use std::{error::Error, fmt::Display, pin::pin, sync::Arc, time::Duration};
 
 use rand::seq::SliceRandom;
 use songbird::{input::Input, shards::TwilightMap, Call, Songbird};
@@ -54,9 +54,9 @@ struct State {
 async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     tracing_subscriber::fmt::init();
 
-    let token = get_var("DISCORD_TOKEN");
-    let vc: Id<ChannelMarker> = parse_var("DISCORD_VC");
-    let guild: Id<GuildMarker> = parse_var("DISCORD_GUILD");
+    let token = valk_utils::get_var("DISCORD_TOKEN");
+    let vc: Id<ChannelMarker> = valk_utils::parse_var("DISCORD_VC");
+    let guild: Id<GuildMarker> = valk_utils::parse_var("DISCORD_GUILD");
 
     let http = HttpClient::new(token.clone());
     let user_id = http.current_user().await?.model().await?.id;
@@ -193,18 +193,4 @@ async fn play_song(
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
     Ok(())
-}
-
-fn get_var(name: &str) -> String {
-    std::env::var(name).unwrap_or_else(|_| panic!("{name} required in the environment"))
-}
-
-fn parse_var<T>(name: &str) -> T
-where
-    T: FromStr,
-    T::Err: std::fmt::Debug,
-{
-    get_var(name)
-        .parse()
-        .unwrap_or_else(|_| panic!("{name} must be a valid {}", std::any::type_name::<T>()))
 }

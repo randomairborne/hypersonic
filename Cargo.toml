@@ -16,6 +16,7 @@ tokio-util = { version = "0.7", features = ["rt"] }
 futures-util = "0.3.31"
 rand = "0.9.1"
 thiserror = "2.0.12"
+valk-utils = "0.1.2"
 
 [dependencies.songbird]
 default-features = false

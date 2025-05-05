@@ -1061,6 +1061,7 @@ dependencies = [
  "twilight-gateway",
  "twilight-http",
  "twilight-model",
+ "valk-utils",
  "vss",
 ]
 
@@ -3467,6 +3468,12 @@ checksum = "458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9"
 dependencies = [
  "getrandom 0.3.2",
 ]
+
+[[package]]
+name = "valk-utils"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea1b9bde601c35a8d06cb6238d98720fa7621d8b25c6c07893f84bebb6e0344c"
 
 [[package]]
 name = "valuable"
