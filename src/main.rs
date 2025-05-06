@@ -70,7 +70,7 @@ struct State {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::EnvFilter::from_default_env();
 
     let token = valk_utils::get_var("DISCORD_TOKEN");
     let vc: Id<ChannelMarker> = valk_utils::parse_var("DISCORD_VC");
