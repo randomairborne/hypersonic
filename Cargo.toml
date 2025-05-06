@@ -4,19 +4,28 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# audio processing
 symphonia = { features = ["aac", "mpa", "isomp4", "alac", "vorbis"], version = "0.5" }
+
+# async
 tokio = { features = ["macros", "rt-multi-thread", "sync"], version = "1" }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures-util = "0.3"
+
+# logging
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = "0.1"
+
+# utilities
+valk-utils = "0.1"
+thiserror = "2"
+rand = "0.9"
+vss = "0.1"
+
+# discord interface
 twilight-gateway = "0.16"
 twilight-model = "0.16"
 twilight-http = "0.16"
-tracing = "0.1"
-vss = "0.1"
-tokio-util = { version = "0.7", features = ["rt"] }
-futures-util = "0.3.31"
-rand = "0.9.1"
-thiserror = "2.0.12"
-valk-utils = "0.1.2"
 
 [dependencies.songbird]
 default-features = false
