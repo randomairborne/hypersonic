@@ -21,7 +21,9 @@ pub fn get_tracks(path: impl AsRef<Path>) -> Result<Box<[Song]>, TrackLoadError>
         .iter()
         .filter(|v| v.extension().is_some_and(is_audio_extension))
     {
-        output.push(add_metadata(file)?);
+        let song = add_metadata(file)?;
+        debug!(?song, "Loaded song");
+        output.push(song);
     }
     Ok(output.into_boxed_slice())
 }

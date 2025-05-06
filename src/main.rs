@@ -36,10 +36,28 @@ impl Display for SongMetadata {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Song {
     data: Box<[u8]>,
     meta: SongMetadata,
+}
+
+impl std::fmt::Display for Song {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.meta)
+    }
+}
+
+impl std::fmt::Debug for Song {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Song")
+            .field("meta", &self.meta)
+            .field(
+                "data",
+                &format!("[boxed binary data {} bytes long]", self.data.len()),
+            )
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -159,6 +177,7 @@ async fn play(
     loop {
         tracks.shuffle(&mut rand::rng());
         for song in &tracks {
+            println!("Attempting to play {song}");
             if let Err(source) = play_song(call.clone(), state.clone(), song).await {
                 error!(?source, "error playing song");
             }
