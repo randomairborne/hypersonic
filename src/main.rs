@@ -199,7 +199,7 @@ async fn play_song(
         artist = song.meta.artist.as_ref(),
         "now playing song"
     );
-    
+
     state
         .http
         .create_message(state.vc)
